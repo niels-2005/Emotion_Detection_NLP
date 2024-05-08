@@ -3,16 +3,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix
-)
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
-def classification_evaluation_pipeline(X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndarray, classes: list, get_wrong_preds: bool = False) -> None:
+def classification_evaluation_pipeline(
+    X_test: pd.Series,
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    classes: list,
+    get_wrong_preds: bool = False,
+) -> None:
     """
-    Evaluates the classification model by generating a comprehensive report including classification 
+    Evaluates the classification model by generating a comprehensive report including classification
     metrics and a confusion matrix. Optionally, it can also return a DataFrame containing incorrect predictions if specified.
 
     Args:
@@ -41,7 +43,9 @@ def classification_evaluation_pipeline(X_test: pd.Series, y_true: np.ndarray, y_
     make_confusion_matrix(y_true=y_true, y_pred=y_pred, classes=classes)
     if get_wrong_preds:
         print("3. Getting wrong Predictions.")
-        df, wrong_preds = get_wrong_predictions(X_test=X_test, y_pred=y_pred, y_true=y_true, classes=classes)
+        df, wrong_preds = get_wrong_predictions(
+            X_test=X_test, y_pred=y_pred, y_true=y_true, classes=classes
+        )
         return df, wrong_preds
 
 
@@ -131,10 +135,12 @@ def make_confusion_matrix(
     plt.show()
 
 
-def get_wrong_predictions(X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndarray, classes: list) -> tuple[pd.DataFrame, pd.DataFrame]:
+def get_wrong_predictions(
+    X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndarray, classes: list
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Identifies and returns the correct and incorrect predictions made by a classification model. 
-    The function creates a DataFrame that includes the test inputs, actual and predicted labels, and class names. 
+    Identifies and returns the correct and incorrect predictions made by a classification model.
+    The function creates a DataFrame that includes the test inputs, actual and predicted labels, and class names.
     It also visualizes the distribution of correct and incorrect predictions.
 
     Args:
@@ -151,11 +157,11 @@ def get_wrong_predictions(X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndar
     The function also plots a count plot showing the balance between correct and incorrect predictions across predicted class labels.
     """
     df_dict = {
-    "text": X_test.values,
-    "y_true": y_true,
-    "y_pred": y_pred,
-    "y_true_classnames": [classes[i] for i in y_true],
-    "y_pred_classnames": [classes[i] for i in y_pred],
+        "text": X_test.values,
+        "y_true": y_true,
+        "y_pred": y_pred,
+        "y_true_classnames": [classes[i] for i in y_true],
+        "y_pred_classnames": [classes[i] for i in y_pred],
     }
 
     df_pred = pd.DataFrame(df_dict).reset_index(drop=True)
