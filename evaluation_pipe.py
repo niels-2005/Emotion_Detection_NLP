@@ -16,7 +16,9 @@ from sklearn.metrics import (
 from sklearn.metrics import roc_curve, auc
 
 
-def classification_evaluation_pipeline(y_true: np.ndarray, y_pred: np.ndarray, classes: list) -> None:
+def classification_evaluation_pipeline(
+    y_true: np.ndarray, y_pred: np.ndarray, classes: list
+) -> None:
     """
     Evaluates the classification model by generating a comprehensive report including classification metrics,
     confusion matrix, and ROC curve.

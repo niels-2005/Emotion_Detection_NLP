@@ -30,11 +30,17 @@ pipelines = [
     Pipeline([("vect", CountVectorizer()), ("clf", SVC())]),
     Pipeline([("tfidf", TfidfVectorizer()), ("clf", SVC())]),
     Pipeline([("vect", CountVectorizer()), ("clf", RandomForestClassifier(n_jobs=-1))]),
-    Pipeline([("tfidf", TfidfVectorizer()), ("clf", RandomForestClassifier(n_jobs=-1))]),
+    Pipeline(
+        [("tfidf", TfidfVectorizer()), ("clf", RandomForestClassifier(n_jobs=-1))]
+    ),
     Pipeline([("vect", CountVectorizer()), ("clf", GradientBoostingClassifier())]),
     Pipeline([("tfidf", TfidfVectorizer()), ("clf", GradientBoostingClassifier())]),
-    Pipeline([("vect", CountVectorizer()), ("clf", PassiveAggressiveClassifier(n_jobs=-1))]),
-    Pipeline([("tfidf", TfidfVectorizer()), ("clf", PassiveAggressiveClassifier(n_jobs=-1))]),
+    Pipeline(
+        [("vect", CountVectorizer()), ("clf", PassiveAggressiveClassifier(n_jobs=-1))]
+    ),
+    Pipeline(
+        [("tfidf", TfidfVectorizer()), ("clf", PassiveAggressiveClassifier(n_jobs=-1))]
+    ),
     Pipeline([("vect", CountVectorizer()), ("clf", DecisionTreeClassifier())]),
     Pipeline([("tfidf", TfidfVectorizer()), ("clf", DecisionTreeClassifier())]),
     Pipeline([("vect", CountVectorizer()), ("clf", RidgeClassifier())]),
