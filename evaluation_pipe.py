@@ -1,139 +1,48 @@
 import itertools
-import os
-import random
-import time
-
-import matplotlib.cm as cm
+import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
-    confusion_matrix,
-    precision_recall_fscore_support,
+    confusion_matrix
 )
-from sklearn.metrics import roc_curve, auc
 
 
-def classification_evaluation_pipeline(
-    y_true: np.ndarray, y_pred: np.ndarray, classes: list
-) -> None:
+def classification_evaluation_pipeline(X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndarray, classes: list, get_wrong_preds: bool = False) -> None:
     """
-    Evaluates the classification model by generating a comprehensive report including classification metrics,
-    confusion matrix, and ROC curve.
+    Evaluates the classification model by generating a comprehensive report including classification 
+    metrics and a confusion matrix. Optionally, it can also return a DataFrame containing incorrect predictions if specified.
 
     Args:
+        X_test (pd.Series): The input text data used for testing the model.
         y_true (np.ndarray): True labels of the test data.
         y_pred (np.ndarray): Predicted labels as returned by the classifier.
-        y_prob (np.ndarray): Probabilities of the positive class or decision function values required for ROC curve calculation.
         classes (list): List of class names for more interpretable visualizations.
+        get_wrong_preds (bool, optional): Flag to determine if the function should return a DataFrame with wrong predictions. Defaults to False.
+
+    Returns:
+        None or (pd.DataFrame, pd.DataFrame): If get_wrong_preds is True, returns a tuple of two DataFrames:
+            1. DataFrame of the test data, predictions, and true labels.
+            2. DataFrame of incorrect predictions only.
 
     Example usage:
         y_pred = model.predict(X_test)
         classes = ["Class 0", "Class 1"]
-        classification_evaluation_pipeline(y_true=y_test, y_pred=y_pred, y_prob=y_prob, classes=classes)
+        classification_evaluation_pipeline(X_test=X_test, y_true=y_test, y_pred=y_pred, y_prob=y_prob, classes=classes)
+
+        # with getting Wrong Predictions
+        df, wrong_preds = classification_evaluation_pipeline(X_test=X_test, y_true=y_test, y_pred=y_pred, classes=classes, get_wrong_preds=True)
     """
     print("1. Printing Classification Report")
     print(classification_report(y_pred=y_pred, y_true=y_true, target_names=classes))
     print("2. Plot Confusion Matrix")
     make_confusion_matrix(y_true=y_true, y_pred=y_pred, classes=classes)
-
-
-def calculate_classes_metrics(
-    y_true: np.ndarray, y_pred: np.ndarray, classes: np.ndarray
-) -> pd.DataFrame:
-    """
-    Calculates precision, recall, and f1-score for each class based on the true and predicted labels.
-
-    This function uses the `classification_report` from scikit-learn to generate a report on precision,
-    recall, and f1-score for each class. It then organizes this information into a pandas DataFrame
-    for easier analysis and visualization.
-
-    Args:
-        y_true (np.ndarray): Array of true labels.
-        y_pred (np.ndarray): Array of predicted labels, same shape as y_true.
-        classes (np.ndarray): Array of class labels as strings.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the class names, their corresponding f1-score, precision,
-                      and recall. Each row corresponds to a class.
-
-    Example usage:
-        class_names = ['cats', 'dogs']
-
-        calculate_classes_metrics(y_true, y_pred, class_names=class_names)
-    """
-    report = classification_report(
-        y_true, y_pred, target_names=classes, output_dict=True
-    )
-
-    # Delete bottom Metrics
-    report.pop("accuracy", None)
-    report.pop("macro avg", None)
-    report.pop("weighted avg", None)
-
-    # generate pandas dataframe
-    df = pd.DataFrame.from_dict(report).transpose().reset_index()
-    df.rename(columns={"index": "class_name"}, inplace=True)
-
-    return df
-
-
-def plot_metric_from_classes(
-    df: pd.DataFrame,
-    metric: str,
-    df_class_name_column: str = "class_name",
-    figsize: tuple[int, int] = (10, 10),
-) -> None:
-    """
-    Plots a horizontal bar chart of given metric scores for different classes.
-
-    This function takes a pandas DataFrame containing metrics for different classes,
-    a metric name to plot, and the DataFrame column name that contains class names.
-    It then plots a horizontal bar chart showing the metric scores for each class,
-    sorted in ascending order. Additionally, it annotates each bar with the metric score.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing the metric scores and class names.
-        metric (str): The name of the metric column in `df` to plot.
-                      This metric will be displayed on the x-axis. (precision, recall, f1-score or support)
-        df_class_name_column (str): The name of the column in `df` that contains the class names.
-                                    These class names will be displayed on the y-axis.
-        figsize (tuple[int, int]): A tuple specifying the width and height in inches of the figure to be plotted.
-                                   This allows customization of the plot size for better readability and fitting into different contexts.
-
-    Returns:
-        None: This function does not return a value. It generates a plot.
-
-    Example usage:
-        plot_metric_from_classes(df, metric='f1-score', df_class_name_column='class names', figsize=(10, 10))
-    """
-    fig, ax = plt.subplots(figsize=figsize)
-
-    # sort df with ascending=True (necessary because ylabels wouldnt have the exact values)
-    sorted_df = df.sort_values(by=[metric], ascending=True)
-
-    # num_classes in range for y, x
-    range_num_classes = range(len(sorted_df[df_class_name_column]))
-
-    # create barh chart
-    scores = ax.barh(range_num_classes, sorted_df[metric])
-    ax.set_yticks(range_num_classes)
-    ax.set_yticklabels(sorted_df[df_class_name_column])
-    ax.set_xlabel(f"{metric}")
-    ax.set_title(f"{metric} for Different Classes")
-
-    # write to the right the metric score (%) for each class.
-    for rect in scores:
-        width = rect.get_width()
-        ax.text(
-            1.03 * width,
-            rect.get_y() + rect.get_height() / 1.5,
-            f"{width:.2f}",
-            ha="center",
-            va="center",
-        )
+    if get_wrong_preds:
+        print("3. Getting wrong Predictions.")
+        df, wrong_preds = get_wrong_predictions(X_test=X_test, y_pred=y_pred, y_true=y_true, classes=classes)
+        return df, wrong_preds
 
 
 def make_confusion_matrix(
@@ -220,3 +129,42 @@ def make_confusion_matrix(
     if savefig:
         plt.savefig("confusion_matrix.png")
     plt.show()
+
+
+def get_wrong_predictions(X_test: pd.Series, y_true: np.ndarray, y_pred: np.ndarray, classes: list) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Identifies and returns the correct and incorrect predictions made by a classification model. 
+    The function creates a DataFrame that includes the test inputs, actual and predicted labels, and class names. 
+    It also visualizes the distribution of correct and incorrect predictions.
+
+    Args:
+        X_test (pd.Series): The input text data that was used for testing the model, used here to trace back incorrect predictions to the original inputs.
+        y_true (np.ndarray): The actual labels from the test data, representing the true classes of the inputs.
+        y_pred (np.ndarray): The predicted labels produced by the classification model, used to compare against the true labels to determine prediction correctness.
+        classes (list): A list of class names corresponding to the label indices, used to convert label indices into human-readable class names for easier interpretation and visualization.
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: A tuple containing two DataFrames:
+            1. The first DataFrame includes all predictions with columns for the text, actual and predicted labels, and whether each prediction was correct.
+            2. The second DataFrame is a subset of the first and includes only the rows where the predictions were incorrect.
+
+    The function also plots a count plot showing the balance between correct and incorrect predictions across predicted class labels.
+    """
+    df_dict = {
+    "text": X_test.values,
+    "y_true": y_true,
+    "y_pred": y_pred,
+    "y_true_classnames": [classes[i] for i in y_true],
+    "y_pred_classnames": [classes[i] for i in y_pred],
+    }
+
+    df_pred = pd.DataFrame(df_dict).reset_index(drop=True)
+    df_pred["pred_correct"] = df_pred["y_true"] == df_pred["y_pred"]
+
+    plt.figure(figsize=(8, 4))
+    sns.countplot(x="pred_correct", hue="y_pred_classnames", data=df_pred)
+    plt.title("Balance between Predictions")
+    plt.show()
+
+    wrong_preds = df_pred[df_pred["pred_correct"] == False].reset_index(drop=True)
+    return df_pred, wrong_preds
